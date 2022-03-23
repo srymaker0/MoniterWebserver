@@ -14,10 +14,14 @@ connection_pool *connection_pool::GetInstance() {
     return &connPool;
 }
 
-void connection_pool::init(string url, string User, string PassWord, 
-                           string DBName, int Port, int MaxConn, int close_log) 
-: m_url(url), m_Port(port),m_User(User), m_PassWord(PassWord), m_DatabaseName(PassWord), m_close_log(close_log) {
-    
+void connection_pool::init(string url, string User, string PassWord, string DBName, int Port, int MaxConn, int close_log) {
+    m_url = url;
+	m_Port = Port;
+	m_User = User;
+	m_PassWord = PassWord;
+	m_DatabaseName = DBName;
+	m_close_log = close_log;
+
     for (int i = 0; i < MaxConn; i++) {
         MYSQL *con = nullptr:
         con = mysql_init(con);
