@@ -7,24 +7,17 @@
 
 #include "./sql_connection_pool.h"
 
-connection_pool::connection_pool() {
-    m_CurConn = 0;
-    m_FreeConn = 0;
-}
+connection_pool::connection_pool() : m_CurConn(0), m_FreeConn(0) {}
 
 connection_pool *connection_pool::GetInstance() {
     static connection_pool connPool;
     return &connPool;
 }
 
-void connection_pool::init(string url, string User, string PassWord, string DBName, int Port, int MaxConn, int close_log) {
-    m_url = url;
-    m_Port = Post;
-    m_User = User;
-    m_PassWord = PassWord;
-    m_DatabaseName = DBName;
-    m_close_log = close_log;
-
+void connection_pool::init(string url, string User, string PassWord, 
+                           string DBName, int Port, int MaxConn, int close_log) 
+: m_url(url), m_Port(port),m_User(User), m_PassWord(PassWord), m_DatabaseName(PassWord), m_close_log(close_log) {
+    
     for (int i = 0; i < MaxConn; i++) {
         MYSQL *con = nullptr:
         con = mysql_init(con);
@@ -61,3 +54,50 @@ MYSQL *connection_pool::GetConnection() {
     lock.unlock();
     return con;
 }
+
+bool connection_pool::ReleaseConnection(MYSQL *con) {
+    if (NULL == con) return false;
+    lock.lock();
+
+    connList.push_back(con);   // push back in the pool
+    ++m_FreeConn;
+    --m_CurConn;
+
+    lock.unlock();
+    reserve.post();     // reverse++ inform wait()
+    return true;
+}
+
+void connection_pool::DestroyPool() {
+    lock.lock();
+    if (connList.size() > 0) {
+        list<MYSQL *>::iterator it;
+        for (it = connList.begin(); it != connList.end(); ++it) {
+            MYSQL *con = *it;
+            mysql_close(con);
+        }
+        m_CurConn = 0;
+        m_FreeConn = 0;
+        connList.clear();
+    }
+    lock.unlock();
+}
+
+int connection_pool::GetFreeConn() {
+    return this->m_FreeConn;
+}
+
+connection_pool::~connection_pool() {
+    DestroyPool();
+}
+
+connectionRAII::connectionRAII(MYSQL **SQL, connection_pool *connPool) {
+    *SQL = connPool->GetInstance();
+    conRAII = *SQL;
+    poolRAII = connPool;
+}
+
+connectionRAII::~connectionRAII() {
+    poolRAII->ReleaseConnection(conRAII);
+}
+
