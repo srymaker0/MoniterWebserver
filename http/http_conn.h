@@ -78,6 +78,7 @@ public:
     void init(int sockfd, const sockaddr_in &addr, char *, int, int, string user, string passwd, string sqlname);
     void close_conn(bool real_close = true);
     void process();
+    bool read_once();
     bool write();
     sockaddr_in *get_address() {
         return &m_address;
@@ -117,7 +118,7 @@ private:
     char m_read_buf[READ_BUFFER_SIZE];
     int m_read_idx;
     int m_checked_idx;
-    int m_start_linee;
+    int m_start_line;
     char m_write_buf[WRITE_BUFFER_SIZE];
     int m_write_idx;
     CHECK_STATE m_check_state;
