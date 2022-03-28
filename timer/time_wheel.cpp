@@ -110,7 +110,7 @@ int Utils::setnonblocking(int fd) {
     return old_option;
 }
 
-void Utils::addfd(int epollfd, int fd, bool one_shot, inti TRIGMode) {
+void Utils::addfd(int epollfd, int fd, bool one_shot, int TRIGMode) {
     epoll_event event;
     event.data.fd = fd;
     if (1 == TRIGMode) event.events = EPOLLIN | EPOLLET | EPOLLRDHUP;
