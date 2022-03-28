@@ -50,6 +50,11 @@ public:
         PATH
     };
     enum CHECK_STATE {
+        CHECK_STATE_REQUESTLINE = 0,
+        CHECK_STATE_HEADER,
+        CHECK_STATE_CONTENT
+    };
+    enum HTTP_CODE {
         NO_REQUEST,
         GET_REQUEST,
         BAD_REQUEST,
