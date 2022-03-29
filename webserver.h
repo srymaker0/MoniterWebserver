@@ -25,7 +25,7 @@ const int MAX_FD = 65535;
 const int MAX_EVENT_NUMBER = 10000;
 const int TIMESLOT = 5;
 
-class Webserver {
+class WebServer {
 public:
     WebServer();
     ~WebServer();
@@ -41,8 +41,8 @@ public:
     void eventListen();
     void eventLoop();
     void timer(int connfd, struct sockaddr_in client_address);
-    void adjust_timer(util_timer *timer);
-    void deal_timer(util_timer *timer, int sockfd);
+    void adjust_timer(tw_timer *timer);
+    void deal_timer(tw_timer *timer, int sockfd);
     bool dealclinetdata();
     bool dealwithsignal(bool &timeout, bool &stop_server);
     void dealwithread(int sockfd);
