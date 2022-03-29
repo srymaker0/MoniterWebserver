@@ -40,6 +40,7 @@ private:
 public:
     string m_url;
     string m_Port;
+    string m_User;
     string m_PassWord;
     string m_DatabaseName;
     int m_close_log;
