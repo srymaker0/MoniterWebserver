@@ -84,14 +84,14 @@ public:
     bool push(const T &item) {
         m_mutex.lock();
         if (m_size >= m_max_size) {
-            m_cond.broadcase();
+            m_cond.broadcast();
             m_mutex.unlock();
             return false;
         }
         m_back = (m_back + 1) % m_max_size;
         m_array[m_back] = item;
         m_size++;
-        m_cond.broadcase();
+        m_cond.broadcast();
         m_mutex.unlock();
         return true;
     }

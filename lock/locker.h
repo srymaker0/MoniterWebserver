@@ -16,12 +16,12 @@ class sem {
 public:
     sem() {
         if (sem_init(&m_sem, 0, 0) != 0) {
-            throw std:exception();
+            throw std::exception();
         }
     }
     sem(int num) {
         if (sem_init(&m_sem, 0, num) != 0) {
-            throw std:exception();
+            throw std::exception();
         }
     }
     ~sem() {
@@ -83,8 +83,8 @@ public:
     bool signal() {
         return pthread_cond_signal(&m_cond) == 0;
     }
-    bool broadcase() {
-        return pthread_cond_broadcase(&m_cond) == 0;
+    bool broadcast() {
+        return pthread_cond_broadcast(&m_cond) == 0;
     }
 private:
     pthread_cond_t m_cond;
