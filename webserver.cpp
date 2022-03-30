@@ -8,7 +8,7 @@
 #include "webserver.h"
 
 WebServer::WebServer() {
-    users = new = http_conn[MAX_FD];
+    users = new  http_conn[MAX_FD];
 
     char server_path[100];  // root File path
     getcwd(server_path, 200);
@@ -17,7 +17,7 @@ WebServer::WebServer() {
     strcat(m_root, root);
 
     //timer
-    user_timer = new client_data[MAX_FD];
+    users_timer = new client_data[MAX_FD];
 }
 
 WebServer::~WebServer() {
@@ -138,7 +138,7 @@ void WebServer::timer(int connfd, struct sockaddr_in client_address) {
     users_timer[connfd].sockfd = connfd;
     time_t cur = time(NULL);
     time_t expire = cur + 3 * TIMESLOT;
-    util_timer *timer = NULL;
+    tw_timer *timer = NULL;
     timer = utils.m_time_wheel.add_timer(expire);
     timer->user_data = &users_timer[connfd];
     timer->cb_func = cb_func;
@@ -157,13 +157,13 @@ void WebServer::adjust_timer(tw_timer *timer) {
 void WebServer::deal_timer(tw_timer *timer, int sockfd) {
     timer->cb_func(&users_timer[sockfd]);
     if (timer) {
-        utils_m_time_wheel.del_timer(timer);
+        utils.m_time_wheel.del_timer(timer);
     }
     LOG_INFO("close fd %d", users_timer[sockfd].sockfd);
     return ;
 }
 
-bool WevServer::dealclinetdata() {
+bool WebServer::dealclinetdata() {
     struct sockaddr_in client_address;
     socklen_t client_addrlength = sizeof(client_address);
     if (0 == m_LISTENTrigmode) {
@@ -221,7 +221,7 @@ bool WebServer::dealwithsignal(bool &timeout, bool &stop_server) {
     return true;
 }
 
-void WevServer::dealwithread(int sockfd) {
+void WebServer::dealwithread(int sockfd) {
     tw_timer *timer = users_timer[sockfd].timer;
 
     // reactor
@@ -276,7 +276,7 @@ void WebServer::dealwithwrite(int sockfd) {
             }
         }
     } else {
-        if (users[sockfd].writte()) {
+        if (users[sockfd].write()) {
             LOG_INFO("send data to the client(%s)", inet_ntoa(users[sockfd].get_address()->sin_addr));
             if (timer) {
                 adjust_timer(timer);
