@@ -25,6 +25,8 @@ public:
     bool ReleaseConnection(MYSQL *conn);
     int GetFreeConn();
     void DestroyPool();
+
+    static connection_pool *GetInstance();
     void init(string url, string User, string PassWord, string DataBaseName, int Port, int MaxConn, int close_log);
 private:
     connection_pool();
@@ -52,7 +54,7 @@ public:
     ~connectionRAII();
 
 private:
-    MYSQL *connRAII;
+    MYSQL *conRAII;
     connection_pool *poolRAII;
 };
 
