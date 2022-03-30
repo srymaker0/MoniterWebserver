@@ -14,7 +14,7 @@ using namespace std;
 class Config {
 public :
     Config();
-    ~Config(){};
+    ~Config(){}
     
     void parse_arg(int argc, char *argv[]);
 
@@ -28,6 +28,6 @@ public :
     int thread_nums;
     int close_log;
     int actor_model;
-}
+};
 
 #endif
