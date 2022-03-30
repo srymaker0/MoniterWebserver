@@ -57,10 +57,10 @@ public:
 
     int m_pipefd[2];
     int m_epollfd;
-    http_conn *user;
+    http_conn *users;
 
     // mysql
-    connection_poll *m_connPool;
+    connection_pool *m_connPool;
     string m_user;
     string m_passWord;
     string m_databaseName;
