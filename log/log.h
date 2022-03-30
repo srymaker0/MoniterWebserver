@@ -15,7 +15,7 @@
 #include <pthread.h>
 #include "block_queue.h"
 
-using namespacee std;
+using namespace std;
 
 class Log {
 public:
