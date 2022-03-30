@@ -77,6 +77,19 @@ bool threadpool<T>::append(T *request, int state) {
 }
 
 template<typename T>
+bool threadpool<T>::append_p(T *request) {
+    m_queuelocker.lock();
+    if (m_workqueue.size() >= m_max_requests) {
+        m_queuelocker.unlock();
+        return false;
+    }
+    m_workqueue.push_back(request);
+    m_queuelocker.unlock();
+    m_queuestat.post();
+    return true;
+}
+
+template<typename T>
 void *threadpool<T>::worker(void *arg) {
     threadpool *pool = (threadpool *)arg;
     pool->run();
