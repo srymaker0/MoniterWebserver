@@ -5,6 +5,13 @@
 	> Created Time: Tue 22 Mar 2022 05:10:28 PM CST
  ************************************************************************/
 #include <mysql/mysql.h>
+#include <stdio.h>
+#include <string>
+#include <string.h>
+#include <stdlib.h>
+#include <list>
+#include <pthread.h>
+#include <iostream>
 #include "./sql_connection_pool.h"
 
 connection_pool::connection_pool() : m_CurConn(0), m_FreeConn(0) {}
@@ -23,16 +30,16 @@ void connection_pool::init(string url, string User, string PassWord, string DBNa
 	m_close_log = close_log;
 
     for (int i = 0; i < MaxConn; i++) {
-        MYSQL *con = nullptr;
+        MYSQL *con = NULL;
         con = mysql_init(con);
 
-        if (con == nullptr) {
+        if (con == NULL) {
             LOG_ERROR("MySQL Error");
             exit(1);
         }
-        con = mysql_real_connect(con, url.c_str(), User.c_str(), PassWord.c_str(), DBName.c_str(), Port, nullptr, 0);
+        con = mysql_real_connect(con, url.c_str(), User.c_str(), PassWord.c_str(), DBName.c_str(), Port, NULL, 0);
 
-        if (con == nullptr) {
+        if (con == NULL) {
             LOG_ERROR("MySQL Error");
             exit(1);
         }
@@ -45,8 +52,8 @@ void connection_pool::init(string url, string User, string PassWord, string DBNa
 }
 
 MYSQL *connection_pool::GetConnection() {
-    MYSQL *con = nullptr;
-    if (0 == connList.size()) return nullptr;
+    MYSQL *con = NULL;
+    if (0 == connList.size()) return NULL;
     
     reserve.wait();     //reserve-- 0 block >0 goto next
     lock.lock();
