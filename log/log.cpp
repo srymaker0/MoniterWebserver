@@ -14,7 +14,7 @@
 #include <pthread.h>
 
 Log::Log() : m_count(0), m_is_async(false) {}
-Log::~Log() { if(m_fp != nullptr) fclose(m_fp); }
+Log::~Log() { if(m_fp != NULL) fclose(m_fp); }
 
 bool Log::init(const char *file_name, int close_log, int log_buf_size, int split_lines, int max_queue_size) {
     if (max_queue_size >= 1) {
@@ -27,7 +27,7 @@ bool Log::init(const char *file_name, int close_log, int log_buf_size, int split
     m_close_log = close_log;
     m_log_buf_size = log_buf_size;
     m_buf = new char[m_log_buf_size];
-    memset(m_buf, 0, m_log_buf_size);
+    memset(m_buf, '\0', m_log_buf_size);
     m_split_lines = split_lines;
 
     time_t t = time(NULL);
@@ -41,11 +41,14 @@ bool Log::init(const char *file_name, int close_log, int log_buf_size, int split
     } else {
         strcpy(log_name, p + 1);
         strncpy(dir_name, file_name, p - file_name + 1);
-        snprintf(log_full_name, 255, "%d_%02d_%02d_%s", my_tm.tm_year + 1900,my_tm.tm_mon + 1, my_tm.tm_mday, file_name);
+        snprintf(log_full_name, 255, "%s%d_%02d_%02d_%s", dir_name, my_tm.tm_year + 1900, my_tm.tm_mon + 1, my_tm.tm_mday, log_name);
     }
     m_today = my_tm.tm_mday;
     m_fp = fopen(log_full_name, "a");
+    printf("fopen......\n");
     if (m_fp == NULL) return false;
+    
+    printf("m_fp == true...\n");
     return true;
 }
 
