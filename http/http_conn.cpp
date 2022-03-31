@@ -298,16 +298,16 @@ http_conn::HTTP_CODE http_conn::process_read() {
 
 http_conn::HTTP_CODE http_conn::do_request() {
     strcpy(m_real_file, doc_root);
-    printf("doc_root:%s\n", m_real_file);
+    //printf("doc_root:%s\n", m_real_file);
     int len = strlen(doc_root);
-    printf("m_url:%s\n", m_url);
+    //printf("m_url:%s\n", m_url);
     const char *p = strrchr(m_url, '/');
     if (cgi == 1 && (*(p + 1) == '2' || *(p + 1) == '3')) {
         char flag = m_url[1];
         char *m_url_real = (char *)malloc(sizeof(char) * 200);
         strcpy(m_url_real, "/");
         strcat(m_url_real, m_url + 2);
-        printf("m_url_read:%s\n", m_url_real);
+        //printf("m_url_read:%s\n", m_url_real);
         strncpy(m_real_file + len, m_url_real, FILENAME_LEN - len - 1);
         free(m_url_real);
 
@@ -400,7 +400,7 @@ bool http_conn::write() {
     while(1) {
         temp = writev(m_sockfd, m_iv, m_iv_count);
         
-        printf("writev......\n");
+        //printf("writev......\n");
 
         if (temp < 0) {
             if (errno == EAGAIN) {
@@ -478,25 +478,25 @@ bool http_conn::add_content(const char *content) {
 bool http_conn::process_write(HTTP_CODE ret) {
     switch (ret) {
         case INTERNAL_ERROR: {
-            printf("INTERNAL_ERROR-----------------\n");
+            //printf("INTERNAL_ERROR-----------------\n");
             add_status_line(500, error_500_title);
             add_headers(strlen(error_500_form));
             if (!add_content(error_500_form)) return false;    
         } break;
         case BAD_REQUEST: {
-            printf("BAD_REQUEST-----------------\n");
+            //printf("BAD_REQUEST-----------------\n");
             add_status_line(404, error_404_title);
             add_headers(strlen(error_404_form));
             if (!add_content(error_404_form)) return false;
         } break;
         case FORBIDDEN_REQUEST: {
-            printf("FORBIDDEN_REQUEST-----------------\n");
+            //printf("FORBIDDEN_REQUEST-----------------\n");
             add_status_line(403, error_403_title);
             add_headers(strlen(error_403_form));
             if (!add_content(error_403_form)) return false;
         } break;
         case FILE_REQUEST: {
-            printf("FILE_REQUEST-----------------\n");
+            //printf("FILE_REQUEST-----------------\n");
             add_status_line(200, ok_200_title);
             if (m_file_stat.st_size != 0) {
                 add_headers(m_file_stat.st_size);
