@@ -128,9 +128,9 @@ void http_conn::init() {
     timer_flag = 0;
     improv = 0;
 
-    memset(m_read_buf, 0, READ_BUFFER_SIZE);
-    memset(m_write_buf, 0, WRITE_BUFFER_SIZE);
-    memset(m_real_file, 0, FILENAME_LEN);
+    memset(m_read_buf, '\0', READ_BUFFER_SIZE);
+    memset(m_write_buf, '\0', WRITE_BUFFER_SIZE);
+    memset(m_real_file, '\0', FILENAME_LEN);
 }
 
 http_conn::LINE_STATUS http_conn::parse_line() {
@@ -219,7 +219,7 @@ http_conn::HTTP_CODE http_conn::parse_request_line(char *text) {
         m_url = strchr(m_url, '/');
     }
     if (!m_url || m_url[0] != '/') return BAD_REQUEST;
-    if (strlen(m_url) == 1) strcat(m_url, "judge.html");
+    if (strlen(m_url) == 1) strcat(m_url, "login.html");
     m_check_state = CHECK_STATE_HEADER;
     return NO_REQUEST;
 }
@@ -298,13 +298,16 @@ http_conn::HTTP_CODE http_conn::process_read() {
 
 http_conn::HTTP_CODE http_conn::do_request() {
     strcpy(m_real_file, doc_root);
+    printf("doc_root:%s\n", m_real_file);
     int len = strlen(doc_root);
+    printf("m_url:%s\n", m_url);
     const char *p = strrchr(m_url, '/');
     if (cgi == 1 && (*(p + 1) == '2' || *(p + 1) == '3')) {
         char flag = m_url[1];
         char *m_url_real = (char *)malloc(sizeof(char) * 200);
         strcpy(m_url_real, "/");
         strcat(m_url_real, m_url + 2);
+        printf("m_url_read:%s\n", m_url_real);
         strncpy(m_real_file + len, m_url_real, FILENAME_LEN - len - 1);
         free(m_url_real);
 
@@ -337,7 +340,7 @@ http_conn::HTTP_CODE http_conn::do_request() {
                 m_lock.unlock();
                 
                 if (!res) {
-                    strcpy(m_url, "/log.html");
+                    strcpy(m_url, "/register.html");
                 } else {
                     strcpy(m_url, "/registerError.html");
                 }
@@ -355,19 +358,14 @@ http_conn::HTTP_CODE http_conn::do_request() {
         
     if (*(p + 1) == '0') {
         char *m_url_real = (char *)malloc(sizeof(char) * 200);
-        strcpy(m_url_real, "/register.html");
+        strcpy(m_url_real, "/login.html");
         strncpy(m_real_file + len, m_url_real, strlen(m_url_real));
         free(m_url_real);
     } else if (*(p + 1) == '1') {
         char *m_url_real = (char *)malloc(sizeof(char) * 200);
-        strcpy(m_url_real, "/log.html");
+        strcpy(m_url_real, "/login.html");
         strncpy(m_real_file + len, m_url_real, strlen(m_url_real));
         free(m_url_real);
-    } else if (*(p + 1) == '.') {
-        // ..........
-        //
-        //
-        // ..........
     } else {
         strncpy(m_real_file + len, m_url, FILENAME_LEN - len - 1);
     }
@@ -401,6 +399,9 @@ bool http_conn::write() {
 
     while(1) {
         temp = writev(m_sockfd, m_iv, m_iv_count);
+        
+        printf("writev......\n");
+
         if (temp < 0) {
             if (errno == EAGAIN) {
                 modfd(m_epollfd, m_sockfd, EPOLLOUT, m_TRIGMode);
@@ -477,21 +478,25 @@ bool http_conn::add_content(const char *content) {
 bool http_conn::process_write(HTTP_CODE ret) {
     switch (ret) {
         case INTERNAL_ERROR: {
+            printf("INTERNAL_ERROR-----------------\n");
             add_status_line(500, error_500_title);
             add_headers(strlen(error_500_form));
             if (!add_content(error_500_form)) return false;    
         } break;
         case BAD_REQUEST: {
+            printf("BAD_REQUEST-----------------\n");
             add_status_line(404, error_404_title);
-            add_headers(strlen(error_400_form));
+            add_headers(strlen(error_404_form));
             if (!add_content(error_404_form)) return false;
         } break;
         case FORBIDDEN_REQUEST: {
+            printf("FORBIDDEN_REQUEST-----------------\n");
             add_status_line(403, error_403_title);
             add_headers(strlen(error_403_form));
             if (!add_content(error_403_form)) return false;
         } break;
         case FILE_REQUEST: {
+            printf("FILE_REQUEST-----------------\n");
             add_status_line(200, ok_200_title);
             if (m_file_stat.st_size != 0) {
                 add_headers(m_file_stat.st_size);
@@ -507,7 +512,7 @@ bool http_conn::process_write(HTTP_CODE ret) {
                 add_headers(strlen(ok_string));
                 if (!add_content(ok_string)) return false;
             }
-        } break;
+        }
         default :
             return false;
     }
