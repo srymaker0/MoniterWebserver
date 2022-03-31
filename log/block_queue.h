@@ -18,9 +18,14 @@ using namespace std;
 template<typename T>
 class block_queue {
 public:
-    block_queue(int max_size = 1000) : m_max_size(max_size), m_array(new T[max_size]), 
-    m_size(0), m_front(-1), m_back(-1) {
+    block_queue(int max_size = 1000) {
         if (max_size <= 0) exit(-1);
+
+        m_max_size = max_size;
+        m_array = new T[max_size];
+        m_size = 0;
+        m_front = -1;
+        m_back = -1;
     }
     
     void clear() {
@@ -111,6 +116,31 @@ public:
         return true;
     }
 
+    bool pop(T &item, int ms_timeout) {
+        struct timespec t = {0, 0};
+        struct timeval now = {0, 0};
+        gettimeofday(&now, NULL);
+        m_mutex.lock();
+        if (m_size <= 0) {
+            t.tv_sec = now.tv_sec + ms_timeout / 1000;
+            t.tv_nsec = (ms_timeout % 1000) * 1000;
+            if (!m_cond.timewait(m_mutex.get(), t)) {
+                m_mutex.unlock();
+                return false;
+            }
+        }
+        if (m_size <= 0) {
+            m_mutex.unlock();
+            return false;
+        }
+
+        m_front = (m_front + 1) % m_max_size;
+        item = m_array[m_front];
+        m_size--;
+        m_mutex.unlock();
+        return true;
+    }
+
     ~block_queue() {
         m_mutex.lock();
         if (m_array != NULL) delete [] m_array;
@@ -119,8 +149,8 @@ public:
 
 
 private:
-    block_queue(const block_queue<T> &) = delete;
-    block_queue<T> &operator=(const block_queue<T> &) = delete;
+    // block_queue(const block_queue<T> &) = delete;
+    // block_queue<T> &operator=(const block_queue<T> &) = delete;
     locker m_mutex;
     cond m_cond;
     
