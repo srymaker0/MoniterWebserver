@@ -41,8 +41,9 @@ public:
     void eventListen();
     void eventLoop();
     void timer(int connfd, struct sockaddr_in client_address);
-    void adjust_timer(tw_timer *timer);
-    void deal_timer(tw_timer *timer, int sockfd);
+    //tw_timer* adjust_timer(tw_timer *timer);
+    void adjust_timer(util_timer *timer);
+    void deal_timer(util_timer *timer, int sockfd);
     bool dealclinetdata();
     bool dealwithsignal(bool &timeout, bool &stop_server);
     void dealwithread(int sockfd);
@@ -82,7 +83,4 @@ public:
     Utils utils;
 
 };
-
-
-
 #endif
