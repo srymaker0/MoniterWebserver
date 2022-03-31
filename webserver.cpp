@@ -10,10 +10,11 @@
 WebServer::WebServer() {
     users = new  http_conn[MAX_FD];
 
-    char server_path[100];  // root File path
+    char server_path[200];  // root File path
     getcwd(server_path, 200);
-    char root[6] = "/root";
+    char root[10] = "/resource";
     m_root = (char *)malloc(strlen(server_path) + strlen(root) + 1);
+    strcpy(m_root, server_path);
     strcat(m_root, root);
 
     //timer
@@ -136,28 +137,49 @@ void WebServer::timer(int connfd, struct sockaddr_in client_address) {
 
     users_timer[connfd].address = client_address;
     users_timer[connfd].sockfd = connfd;
-    time_t cur = time(NULL);
-    time_t expire = cur + 3 * TIMESLOT;
-    tw_timer *timer = NULL;
-    timer = utils.m_time_wheel.add_timer(expire);
+    //tw_timer *timer = utils.m_time_wheel.add_timer(60);
+    //timer->user_data = &users_timer[connfd];
+    //timer->cb_func = cb_func;
+    //users_timer[connfd].timer = timer;
+    util_timer *timer = new util_timer;
     timer->user_data = &users_timer[connfd];
     timer->cb_func = cb_func;
-    users_timer[connfd].timer = timer;
-    return ;
-}
-
-void WebServer::adjust_timer(tw_timer *timer) {
     time_t cur = time(NULL);
-    time_t expire = cur + 3 * TIMESLOT;
-    utils.m_time_wheel.add_timer(expire);
-    LOG_INFO("%s", "addjust timer once");
+    timer->expire = cur + 3 * TIMESLOT;
+    users_timer[connfd].timer = timer;
+    utils.m_timer_lst.add_timer(timer);
     return ;
 }
 
+/*
+tw_timer *WebServer::adjust_timer(tw_timer *timer) {
+    utils.m_time_wheel.del_timer(timer);
+    timer = utils.m_time_wheel.add_timer(60);
+    LOG_INFO("%s", "addjust timer once");
+    return timer;
+}
+*/
+void WebServer::adjust_timer(util_timer *timer) {
+    time_t cur = time(NULL);
+    timer->expire = cur + 3 * TIMESLOT;
+    utils.m_timer_lst.adjust_timer(timer);
+    LOG_INFO("%s", "adjust timer once");
+    return ;
+}
+/*
 void WebServer::deal_timer(tw_timer *timer, int sockfd) {
     timer->cb_func(&users_timer[sockfd]);
     if (timer) {
         utils.m_time_wheel.del_timer(timer);
+    }
+    LOG_INFO("close fd %d", users_timer[sockfd].sockfd);
+    return ;
+}
+*/
+void WebServer::deal_timer(util_timer *timer, int sockfd) {
+    timer->cb_func(&users_timer[sockfd]);
+    if (timer) {
+        utils.m_timer_lst.del_timer(timer);
     }
     LOG_INFO("close fd %d", users_timer[sockfd].sockfd);
     return ;
@@ -172,7 +194,7 @@ bool WebServer::dealclinetdata() {
             LOG_ERROR("%s:errno is:%d", "accept error", errno);
             return false;
         }
-        if (http_conn::m_user_count > MAX_FD) {
+        if (http_conn::m_user_count >= MAX_FD) {
             utils.show_error(connfd, "Internal server busy");
             LOG_ERROR("%s", "Internal server busy");
             return false;
@@ -210,20 +232,23 @@ bool WebServer::dealwithsignal(bool &timeout, bool &stop_server) {
         for (int i = 0; i < ret; ++i) {
             switch (signals[i]) {
                 case SIGALRM: {
+                    printf("SIGALRM...\n");
                     timeout = true;
                 } break;
                 case SIGTERM: {
+                    printf("SIGTERM...\n");
                     stop_server = true;
                 } break;
             }
         }
     }
+    printf("signal ok...\n");
     return true;
 }
 
 void WebServer::dealwithread(int sockfd) {
-    tw_timer *timer = users_timer[sockfd].timer;
-
+    //tw_timer *timer = users_timer[sockfd].timer;
+    util_timer *timer = users_timer[sockfd].timer;
     // reactor
     if (1 == m_actormodel) {
         if (timer) {
@@ -258,7 +283,8 @@ void WebServer::dealwithread(int sockfd) {
 }
 
 void WebServer::dealwithwrite(int sockfd) {
-    tw_timer *timer = users_timer[sockfd].timer;
+    //tw_timer *timer = users_timer[sockfd].timer;
+    util_timer *timer = users_timer[sockfd].timer;
     if (1 == m_actormodel) {
         if (timer) {
             adjust_timer(timer);
@@ -292,6 +318,7 @@ void WebServer::eventLoop() {
     bool timeout = false;
     bool stop_server = false;
     while (!stop_server) {
+        printf("In the eventLoop.....\n");
         int number = epoll_wait(m_epollfd, events, MAX_EVENT_NUMBER, -1);
         if (number < 0 && errno != EINTR) {
             LOG_ERROR("%s", "epoll failure");
@@ -299,28 +326,42 @@ void WebServer::eventLoop() {
         }
         for (int i = 0; i < number; i++) {
             int sockfd = events[i].data.fd;
-            
+            printf("EventLoop for loop...\n");
+
             if (sockfd == m_listenfd) {
                 bool flag = dealclinetdata();
+
+                printf("dealclinetdata...\n");
+
                 if (flag == false) continue;
             } else if (events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)) {
-                tw_timer *timer = users_timer[sockfd].timer;
+                //tw_timer *timer = users_timer[sockfd].timer;
+                printf("EPOLLHUP || EPOLLERR\n");
+                util_timer *timer = users_timer[sockfd].timer;
                 deal_timer(timer, sockfd);
             } else if ((sockfd == m_pipefd[0]) && (events[i].events & EPOLLIN)){
                 bool flag = dealwithsignal(timeout, stop_server);
+                printf("dealwithsignal...\n");
+                
                 if (false == flag) {
                     LOG_ERROR("%s", "dealclinetdata failure");
                 }
+
             } else if (events[i].events & EPOLLIN) {
                 dealwithread(sockfd);
+                printf("dealwithread...\n");
             } else if (events[i].events & EPOLLOUT) {
                 dealwithwrite(sockfd);
+                printf("dealwithwrite...\n");
             }
         }
         if (timeout) {
+
             utils.timer_handler();
+            printf("timer_handler...\n");
             LOG_INFO("%s", "timer tick");
             timeout = false;
+            printf("timeout = false\n");
         }
     }
     return ;
