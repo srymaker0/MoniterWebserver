@@ -232,17 +232,17 @@ bool WebServer::dealwithsignal(bool &timeout, bool &stop_server) {
         for (int i = 0; i < ret; ++i) {
             switch (signals[i]) {
                 case SIGALRM: {
-                    printf("SIGALRM...\n");
+                    //printf("SIGALRM...\n");
                     timeout = true;
                 } break;
                 case SIGTERM: {
-                    printf("SIGTERM...\n");
+                    //printf("SIGTERM...\n");
                     stop_server = true;
                 } break;
             }
         }
     }
-    printf("signal ok...\n");
+    //printf("signal ok...\n");
     return true;
 }
 
@@ -318,7 +318,7 @@ void WebServer::eventLoop() {
     bool timeout = false;
     bool stop_server = false;
     while (!stop_server) {
-        printf("In the eventLoop.....\n");
+        //printf("In the eventLoop.....\n");
         int number = epoll_wait(m_epollfd, events, MAX_EVENT_NUMBER, -1);
         if (number < 0 && errno != EINTR) {
             LOG_ERROR("%s", "epoll failure");
@@ -326,22 +326,22 @@ void WebServer::eventLoop() {
         }
         for (int i = 0; i < number; i++) {
             int sockfd = events[i].data.fd;
-            printf("EventLoop for loop...\n");
+            //printf("EventLoop for loop...\n");
 
             if (sockfd == m_listenfd) {
                 bool flag = dealclinetdata();
 
-                printf("dealclinetdata...\n");
+                //printf("dealclinetdata...\n");
 
                 if (flag == false) continue;
             } else if (events[i].events & (EPOLLRDHUP | EPOLLHUP | EPOLLERR)) {
                 //tw_timer *timer = users_timer[sockfd].timer;
-                printf("EPOLLHUP || EPOLLERR\n");
+                //printf("EPOLLHUP || EPOLLERR\n");
                 util_timer *timer = users_timer[sockfd].timer;
                 deal_timer(timer, sockfd);
             } else if ((sockfd == m_pipefd[0]) && (events[i].events & EPOLLIN)){
                 bool flag = dealwithsignal(timeout, stop_server);
-                printf("dealwithsignal...\n");
+                //printf("dealwithsignal...\n");
                 
                 if (false == flag) {
                     LOG_ERROR("%s", "dealclinetdata failure");
@@ -349,19 +349,19 @@ void WebServer::eventLoop() {
 
             } else if (events[i].events & EPOLLIN) {
                 dealwithread(sockfd);
-                printf("dealwithread...\n");
+                //printf("dealwithread...\n");
             } else if (events[i].events & EPOLLOUT) {
                 dealwithwrite(sockfd);
-                printf("dealwithwrite...\n");
+                //printf("dealwithwrite...\n");
             }
         }
         if (timeout) {
 
             utils.timer_handler();
-            printf("timer_handler...\n");
+            //printf("timer_handler...\n");
             LOG_INFO("%s", "timer tick");
             timeout = false;
-            printf("timeout = false\n");
+            //printf("timeout = false\n");
         }
     }
     return ;
