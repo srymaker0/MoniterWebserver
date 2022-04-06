@@ -349,7 +349,7 @@ http_conn::HTTP_CODE http_conn::do_request() {
             }
         } else if (*(p + 1) == '2') {
             if (users.find(name) != users.end() && users[name] == password) {
-                strcpy(m_url, "/welcome.html");
+                strcpy(m_url, "/moniter.html");
             } else {
                 strcpy(m_url, "/logError.html");
             }
