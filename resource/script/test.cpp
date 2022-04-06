@@ -12,7 +12,7 @@ using namespace std;
 int main() {
     FILE *fp;
     char buffer[1024];
-    fp=popen("./cpu.sh","r");
+    fp=popen("./test_all.sh","r");
     fgets(buffer,sizeof(buffer),fp);
     printf("%s",buffer);
     pclose(fp);
